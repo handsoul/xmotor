@@ -169,6 +169,8 @@ bool SerialPortBase::ReadSerialPortInternal(void)
 		return false;
 	}
 
+	// GetLastError() 始终返回6:无效句柄.待解决.
+
 	/*if(ClearCommError(m_hSerialPort, &dwError, NULL) && dwError > 0)
 		PurgeComm(m_hSerialPort, PURGE_RXABORT);
 
