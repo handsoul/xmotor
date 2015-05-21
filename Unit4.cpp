@@ -43,7 +43,7 @@ void __fastcall TForm4::btnOpenSerialPortClick(TObject *Sender)
 
 	if( m_pCom->IsPortOpen() == false)
 	{
-		if  (this->m_pCom->OpenPort(cbSerialPorts->Text) == false)
+		if  (this->m_pCom->OpenPort(cbSerialPorts->Text,115200) == false)
 		{
 			ShowMessage("打开失败");
 		}
@@ -62,15 +62,12 @@ void __fastcall TForm4::btnOpenSerialPortClick(TObject *Sender)
 
 void __fastcall TForm4::OnRecvMessage(TMessage & msg)
 {
-
-
 	static unsigned char sbuf[1024];
 	int len = 0;
 	UnicodeString s = "";
 
 	if(msg.Msg == MSG_RECV_COMMDATA)
 	{
-
 		if (this->m_pCom == NULL || this->m_pCom->IsPortOpen() == false)
 		{
 			return;
@@ -98,7 +95,7 @@ bool __fastcall TForm4::SendMsg(unsigned char * pbuf, int len)
 		return false;
 	}
 
-    UnicodeString s = "发送数据:";
+	UnicodeString s = "发送数据:";
 
 
 	if (this->m_pCom->WritePort(pbuf,len))
@@ -114,7 +111,7 @@ bool __fastcall TForm4::SendMsg(unsigned char * pbuf, int len)
 	{
 		s = "发送失败";
 		mm_ComRec->Lines->Add(s);
-        return false;
+		return false;
 	}
 
 	return false;
@@ -132,7 +129,7 @@ const double voltScale = 5000/(4096*2.65);
 bool TForm4::ParseData(unsigned char * buf,unsigned int len)
 {
 
-    const double cycles[3] = {4,96,1000};
+	const double cycles[3] = {4,96,1000};
 
 	unsigned char checksum;
 	double ds[12];

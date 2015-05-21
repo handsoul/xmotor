@@ -51,8 +51,8 @@ public:		// User declarations
     bool __fastcall SendMsg(unsigned char * pbuf, int len);
 
 	BEGIN_MESSAGE_MAP
-		VCL_MESSAGE_HANDLER(MSG_RECV_COMMDATA + 1, TMessage , OnSndMessage)
-		VCL_MESSAGE_HANDLER(MSG_RECV_COMMDATA,TMessage,OnRecvMessage)
+		MESSAGE_HANDLER(MSG_RECV_COMMDATA + 1, TMessage , OnSndMessage)
+		MESSAGE_HANDLER(MSG_RECV_COMMDATA,TMessage,OnRecvMessage)
 	END_MESSAGE_MAP(TForm)
 };
 //---------------------------------------------------------------------------

@@ -6,7 +6,7 @@
 #include <queue>
 #include <vector>
 
-#define MSG_RECV_COMMDATA	(WM_USER + 0x100)
+#define MSG_RECV_COMMDATA	(WM_USER + 618)
 
 // 前向声明.
 class SerialPortBase;
@@ -15,14 +15,41 @@ class SerialPortThread : public TThread
 {
 protected:
 	SerialPortBase *m_pCom;
+	TCriticalSection *m_lock;
 	void __fastcall Execute(void);
+
+
 public:
-	bool m_bTerminated;
+    volatile bool m_bSuspended;
+	void ThreadSuspend(void)
+	{
+		if(m_bSuspended == false)
+		{
+			m_lock->Acquire();
+			m_bSuspended = true;
+		}
+	}
+
+	void ThreadResume(void)
+	{
+		if(m_bSuspended == true)
+		{
+			m_lock->Release();
+			m_bSuspended = false;
+		}
+		//ev
+	}
+
 	SerialPortThread(SerialPortBase *pCom)
-		:TThread(false),m_pCom(pCom),m_bTerminated(true)
+		:TThread(false),m_pCom(pCom),m_bSuspended(false)
 	{
 		//FreeOnTerminate =true;
+		m_lock = new TCriticalSection;
+		//pev	   = new TEvent(NULL,
+
+		m_bSuspended = false;
 	}
+
 };
 
 //使用后台线程收发数据.

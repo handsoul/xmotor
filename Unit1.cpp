@@ -128,7 +128,8 @@ void __fastcall TForm1::TestBtnClick(TObject *Sender)
 		}
 	}
 
-	if (idx < 0) {
+	if (idx < 0)
+	{
 		return ;
 	}
 
@@ -347,6 +348,200 @@ bool __fastcall TForm1::storeDataBase(void)
 	return true;
 }
 
+
+#define _MAKEWORD(H,L) (unsigned short)((((unsigned char)H) << 8) | ((unsigned char)L))
+#define _MAKELONG(a,b,c,d) (unsigned int)(((a)<<24)|((b)<<16)|((c)<<8)|((d)<<0))
+
+
+const double fusScale  = 1.0f/16;
+const double DutyScale = 100.0f/1024;
+const double voltScale = 5000/(4096*2.65);
+
+bool __fastcall TForm1::ParseData(unsigned char * buf,unsigned int len)
+{
+
+    const double cycles[3] = {4,96,1000};
+
+	unsigned char checksum;
+	double ds[12];
+
+	//对数据进行校验.
+	if(len < (2 + 1 + 1 + 2))
+	{
+		return false; //数据长度较短.
+	}
+
+	if( buf[0] != 0xAA || buf[1] != 0x55)
+	{
+		mm_ComRec->Lines->Add("帧头错误");
+		return false; // 帧头错误.
+	}
+
+	if( buf[2] > len - 3) // 长度不够.
+	{
+		mm_ComRec->Lines->Add("长度错误");
+		return false;
+	}
+
+
+	for(int i = 3 ;i < len -1 ;i++)
+	{
+		checksum += buf[i];
+	}
+
+	if(checksum != buf[len-1])
+	{
+	//	return false; // 校验错误.
+	}
+
+	// 分解数据.
+	if(len < 3 + 1 + 1) // 数据长度不够.
+	{
+		mm_ComRec->Lines->Add("长度不足");
+		return false;
+	}
+
+    // 跳过命令字节.
+	for(int i = 0 ;i< 12;i+=2)
+	{
+        ds[i] = _MAKEWORD(buf[1 +(3+i)],buf[1 + (3+i+1)]);
+	}
+
+	unsigned char * pd = buf + 3;
+
+	if((*pd >= 1) && (*pd <=3))
+	{
+		mm_ComRec->Lines->Add("启动模式" + IntToStr((*pd))+"成功");
+	}
+	else if((*pd >= 0x11) && (*pd <= 0x13)) //返回数据.
+	{
+
+		unsigned char Mode = *pd - 0x11;
+
+		if(len < 51)
+		{
+			mm_ComRec->Lines->Add("数据长度不够.预期=51,实际长度 = " + IntToStr((int)len));
+			return false;
+		}
+
+		pd ++;
+
+		double pmax,pmin,pa,dmax,dmin,da,lmin,lmax,la,hmin,hmax,ha,rmax,rmin,ra,Fmax,Fmin,Fa;
+
+		hmax = _MAKEWORD(pd[0],pd[1]);
+		pd += 2;
+
+		ha   = _MAKEWORD(pd[0],pd[1]);
+		pd += 2;
+
+		hmin = 1200;//固定值.
+
+		lmax = 800;
+
+		lmin = _MAKEWORD(pd[0],pd[1]);
+		pd += 2;
+
+		la 	 = _MAKEWORD(pd[0],pd[1]);
+		pd += 2;
+
+		pmax = _MAKELONG(pd[0],pd[1],pd[2],pd[3]);
+		pd += 4;
+		pmin = _MAKELONG(pd[0],pd[1],pd[2],pd[3]);
+		pd += 4;
+		pa   = _MAKELONG(pd[0],pd[1],pd[2],pd[3]) / cycles[Mode];
+		pd += 4;
+
+
+		rmax = _MAKELONG(pd[0],pd[1],pd[2],pd[3]);
+		pd += 4;
+		rmin = _MAKELONG(pd[0],pd[1],pd[2],pd[3]);
+		pd += 4;
+		ra   = _MAKELONG(pd[0],pd[1],pd[2],pd[3]) / cycles[Mode];
+		pd += 4;
+
+		Fmax = _MAKELONG(pd[0],pd[1],pd[2],pd[3]);
+		pd += 4;
+		Fmin = _MAKELONG(pd[0],pd[1],pd[2],pd[3]);
+		pd += 4;
+		Fa   = _MAKELONG(pd[0],pd[1],pd[2],pd[3]) / cycles[Mode];
+		pd += 4;
+
+		dmax = _MAKELONG(pd[0],pd[1],pd[2],pd[3]);
+		pd += 4;
+		dmin = _MAKELONG(pd[0],pd[1],pd[2],pd[3]);
+		pd += 4;
+		da   = _MAKELONG(pd[0],pd[1],pd[2],pd[3]) / cycles[Mode];
+		pd += 4;
+
+
+		std::vector<double> vd ;
+		vd.push_back(60000000.0/pmax*fusScale);
+		vd.push_back(60000000.0/pa*fusScale);
+		vd.push_back(60000000.0/pmin*fusScale);
+		vd.push_back(dmax/DutyScale);
+		vd.push_back(da/DutyScale);
+		vd.push_back(dmin/DutyScale);
+		vd.push_back(lmax);
+		vd.push_back(la*voltScale);
+		vd.push_back(lmin*voltScale);
+		vd.push_back(hmax*voltScale);
+		vd.push_back(ha*voltScale);
+		vd.push_back(hmin);
+		vd.push_back(rmax*fusScale);
+		vd.push_back(ra*fusScale);
+		vd.push_back(rmin*fusScale);
+		vd.push_back(Fmax*fusScale);
+		vd.push_back(Fa*fusScale);
+		vd.push_back(Fmin*fusScale);
+
+
+		// 查询数据内容.
+		this->UpdateDateItemByVector(vd);
+	}
+	else
+	{
+		mm_ComRec->Lines->Add("未识别的命令码:0x" + IntToHex(*pd,2));
+	}
+
+	return true;
+}
+
+void __fastcall TForm1::OnRecvMessage(TMessage &msg)
+{
+    static unsigned char buf[4096];
+
+	if(msg.Msg != MSG_RECV_COMMDATA)
+	{
+		return;
+	}
+	// 读取.
+
+	if(comx.IsPortOpen() ==false)
+	{
+        return;
+	}
+
+	int len = comx.ReadPort(buf);
+
+	if(len == 0)
+	{
+        return;
+	}
+
+	UnicodeString s = "";
+    s.sprintf(L"收到%6d字节:",len);
+
+	for(int i = 0;i < len;  i++)
+	{
+        s += IntToHex(buf[i],2).UpperCase() + " ";
+	}
+
+    mm_ComRec->Lines->Add(s);
+
+	//处理数据.
+    ParseData(buf,len);
+}
+
 // ---------------------------------------------------------------------------
 void __fastcall TForm1::btnSqlTestClick(TObject *Sender)
 {
@@ -473,6 +668,12 @@ void __fastcall TForm1::PaintBox1Paint(TObject *Sender)
 	g.DrawLine(&p,0,0,PaintBox1->Width,PaintBox1->Height);
 	g.DrawLine(&p,PaintBox1->Width,0,0,PaintBox1->Height);
 	*/
+
+	if(PaintBox1->Visible == false)
+	{
+	    return;
+	}
+
 	if (m_stDg == NULL)
 	{
 		m_stDg = new DataGrids(PaintBox1->Canvas->Handle,PaintBox1->Width,PaintBox1->Height);
@@ -644,23 +845,24 @@ void __fastcall TForm1::FormPaint(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-
-void __fastcall TForm1::FormShow(TObject *Sender)
-{
-	// Form2->ShowModal();
-	// Form3->FormStyle = fsMDIChild;
-    // Form3->Show();
-}
-//---------------------------------------------------------------------------
-
 void __fastcall TForm1::bitbtn_StoreClick(TObject *Sender)
 {
-	static int idx = 0;
+	/*static int idx = 0;
 	idx = (++idx)%2;
 	iconDataBase->Picture->Assign(m_aBmpSt[idx]);
 	iconDevice->Picture->Assign(m_aBmpSt[idx]);
+	*/
 
-	m_iBmpIdx = (++m_iBmpIdx)%2;
+	if(comx.OpenPort("COM1",115200))
+	{
+		m_iBmpIdx = 1;
+        comx.SetNotifyWindow(this->Handle);
+	}
+	else
+	{
+		comx.ClosePort();
+        m_iBmpIdx = 0;
+	}
 }
 //---------------------------------------------------------------------------
 
@@ -739,6 +941,9 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
 	// stbSysBar->Font->Height = stbSysBar->Height - 6;
 	// SG_WaveData->DrawingStyle =  gdsClassic;
 
+	mm_ComRec->Lines->Clear();
+    mm_ComRec->Visible = false;
+
 	// 设置表格内容.
 	UnicodeString sTable[] =
 	{
@@ -763,8 +968,8 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
 
 	SG_WaveData->Cells[4][1] = "rpm";
 	SG_WaveData->Cells[4][2] = "%";
-	SG_WaveData->Cells[4][3] = "V";
-	SG_WaveData->Cells[4][4] = "V";
+	SG_WaveData->Cells[4][3] = "mV";
+	SG_WaveData->Cells[4][4] = "mV";
 	SG_WaveData->Cells[4][5] = "μs";
 	SG_WaveData->Cells[4][6] = "μs";
 
@@ -790,7 +995,14 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-
-
-
+void __fastcall TForm1::FormKeyDown(TObject *Sender, WORD &Key, TShiftState Shift)
+{
+	//按键.
+	if(Key == VK_F11  && Shift.Contains(ssCtrl))
+	{
+		mm_ComRec->Visible = !mm_ComRec->Visible;
+		PaintBox1->Visible = !PaintBox1->Visible;
+	}
+}
+//---------------------------------------------------------------------------
 

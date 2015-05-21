@@ -25,6 +25,8 @@
 #include <algorithm>
 #include <gdiplus.h>
 #include "DrawGraphics.h"
+#include "SerialPort.h"
+#include "cnComm.h"
 
 typedef enum TagInfoType
 {
@@ -69,6 +71,7 @@ __published: // IDE-managed Components
 	TEdit *ED_LowVoltage;
 	TLabel *Label3;
 	TLabel *Label5;
+	TMemo *mm_ComRec;
 	void __fastcall btnSqlTestClick(TObject *Sender);
 	void __fastcall Button2Click(TObject *Sender);
 	void __fastcall PaintBox1Paint(TObject *Sender);
@@ -81,13 +84,13 @@ __published: // IDE-managed Components
 	void __fastcall Button1Click(TObject *Sender);
 	void __fastcall CommTimerTimer(TObject *Sender);
 	void __fastcall FormPaint(TObject *Sender);
-	void __fastcall FormShow(TObject *Sender);
 	void __fastcall bitbtn_StoreClick(TObject *Sender);
 	void __fastcall bitbtn_StoreMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift,
 		  int X, int Y);
 	void __fastcall bitbtn_StoreMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift,
 		  int X, int Y);
 	void __fastcall FormCreate(TObject *Sender);
+	void __fastcall FormKeyDown(TObject *Sender, WORD &Key, TShiftState Shift);
 
 
 private: // User declarations
@@ -136,6 +139,8 @@ private:
     UnicodeString m_sTableName;
 	TestProcedure m_stTestProcedure;// = TestProcedure();
 
+    SerialPortBase comx;
+
 	void __fastcall StartTestMode(int i);
 	void __fastcall ShowTestBlink(bool TestEnd = false);
 	void __fastcall ShowTestResult(int iTestMode);
@@ -144,8 +149,18 @@ private:
 	bool SndData(unsigned char *pbuf, unsigned char mode , unsigned short vh = defaultVoltH, unsigned short vl = defaultVoltL);
 
 	bool __fastcall prepareDataBase(void);
-
 	bool __fastcall storeDataBase(void);
+
+	bool __fastcall TryOpenPort(void);// 尝试打开串口并通信....
+	bool __fastcall ClosePort(void);  // 断开串口...
+
+	void __fastcall OnRecvMessage(TMessage &msg);
+
+	bool __fastcall ParseData(unsigned char * buf,unsigned int len);
+	BEGIN_MESSAGE_MAP
+		MESSAGE_HANDLER(MSG_RECV_COMMDATA,TMessage,OnRecvMessage)
+	END_MESSAGE_MAP(TForm)
+
 
 public : // User declarations
 	__fastcall TForm1(TComponent* Owner);

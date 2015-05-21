@@ -13,15 +13,15 @@ object Form1: TForm1
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  FormStyle = fsMDIChild
+  KeyPreview = True
   OldCreateOrder = False
   Position = poDesktopCenter
   ShowHint = True
   Visible = True
   OnClose = FormClose
   OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
   OnPaint = FormPaint
-  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object iconDataBase: TImage
@@ -59,6 +59,7 @@ object Form1: TForm1
       636E2F706E672F31313335382F313133353839372E706E671D27B93400000000
       49454E44AE426082}
     Stretch = True
+    Visible = False
   end
   object iconDevice: TImage
     Left = 89
@@ -96,6 +97,7 @@ object Form1: TForm1
       6E2E636E2F706E672F31313335382F313133353839382E706E679F772EE50000
       000049454E44AE426082}
     Stretch = True
+    Visible = False
   end
   object Label2: TLabel
     Left = 89
@@ -103,6 +105,7 @@ object Form1: TForm1
     Width = 24
     Height = 13
     Caption = #35774#22791
+    Visible = False
   end
   object Label1: TLabel
     Left = 26
@@ -110,6 +113,7 @@ object Form1: TForm1
     Width = 36
     Height = 13
     Caption = #25968#25454#24211
+    Visible = False
   end
   object labelTestCounter: TLabel
     Left = 369
@@ -126,7 +130,7 @@ object Form1: TForm1
   end
   object ImageFan: TImage
     Left = 46
-    Top = 185
+    Top = 131
     Width = 48
     Height = 48
     Picture.Data = {
@@ -7114,6 +7118,15 @@ object Form1: TForm1
       NumbersOnly = True
       TabOrder = 5
     end
+  end
+  object mm_ComRec: TMemo
+    Left = 687
+    Top = 6
+    Width = 465
+    Height = 468
+    Lines.Strings = (
+      'mm_ComRec')
+    TabOrder = 7
   end
   object ADOConnection1: TADOConnection
     Provider = 'Microsoft.Jet.OLEDB.4.0'
