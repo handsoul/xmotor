@@ -8,6 +8,43 @@
 
 #define ITEMS_OF(array) (sizeof(array)/sizeof(array[0]))
 
+
+
+
+#pragma pack (push,1)
+
+typedef struct tagParams
+{
+	double HighVoltRange[2]; 	// 高电平范围.
+	double LowVoltRange[2];  	// 低电平范围.
+	double DutyRange[2];     	// 占空比范围.
+	double RSpeedRange[3][2];   // 转速范围.3个模式下的转速范围.
+	double VoltLimit[2];		// 高电平门限.低电平门限.
+}Params;
+
+#define MAX_CONFIG_FILE_SIZE 	(100*1024)
+
+//定义一个配置数据.
+typedef struct tagConfigFileOjb
+{
+	unsigned char 	_gap[1024];		// 空白区.
+	unsigned char 	MagicCode[128]; // 数据.
+    wchar_t         UserName[128];
+	wchar_t         Password[128];  // 密码存放区.
+	union
+	{
+ 		Params Params;
+		double _data[128];
+	};
+
+}ConfigOjb;
+
+#pragma pack(pop)
+
+bool CreateApplicationFile(ConfigOjb ** ppojb);
+inline void SyncToMappdFile(void);
+void CloseMappedFile(void);
+
 class BaseDataItem
 {
 protected:
@@ -99,11 +136,11 @@ class Frequence : public BaseDataItem
 {
 public:
 	Frequence(const int _idx, double _max, double _min)
-		: BaseDataItem("频率", _idx, _max, _min)
+		: BaseDataItem("转速", _idx, _max, _min)
 	{
 	}
 
-	Frequence(const int _idx, double val) : BaseDataItem("频率", _idx, val, val)
+	Frequence(const int _idx, double val) : BaseDataItem("转速", _idx, val, val)
 	{
 	}
 
@@ -340,11 +377,11 @@ public:
 		for (it = m_vItems.begin(); it != m_vItems.end(); ++it)
 		{
 #ifndef MIN_FIRST
-			s += (*it)->GetName() + IntToStr(m_iIndex) + "Max" + ",";
-			s += (*it)->GetName() + IntToStr(m_iIndex) + "Min" + ",";
+			s += (*it)->GetName() + "模式" + IntToStr(m_iIndex+1) + "最大" + ",";
+			s += (*it)->GetName() + "模式" + IntToStr(m_iIndex+1) + "最小" + ",";
 #else
-			s += (*it)->GetName() + IntToStr(m_iIndex) + "Min" + ",";
-			s += (*it)->GetName() + IntToStr(m_iIndex) + "Max" + ",";
+			s += (*it)->GetName() + "模式" + IntToStr(m_iIndex+1) + "最小" + ",";
+			s += (*it)->GetName() + "模式" + IntToStr(m_iIndex+1) + "最大" + ",";
 #endif
 		}
 
@@ -368,18 +405,18 @@ public:
 		for (it = m_vItems.begin(); it != m_vItems.end(); ++it)
 		{
 #ifndef MIN_FIRST
-			pStr = new UnicodeString((*it)->GetName() + IntToStr(m_iIndex)
-				+ "Max");
+			pStr = new UnicodeString((*it)->GetName() + "模式" + IntToStr(m_iIndex+1)
+				+ "最大");
 			v.push_back(pStr);
-			pStr = new UnicodeString((*it)->GetName() + IntToStr(m_iIndex)
-				+ "Min");
+			pStr = new UnicodeString((*it)->GetName()  + "模式"+ IntToStr(m_iIndex+1)
+				+ "最小");
 			v.push_back(pStr);
 #else
-			pStr = new UnicodeString((*it)->GetName() + IntToStr(m_iIndex)
-				+ "Min");
+			pStr = new UnicodeString((*it)->GetName()  + "模式"+ IntToStr(m_iIndex+1)
+				+ "最小");
 			v.push_back(pStr);
-			pStr = new UnicodeString((*it)->GetName() + IntToStr(m_iIndex)
-				+ "Max");
+			pStr = new UnicodeString((*it)->GetName()  + "模式"+ IntToStr(m_iIndex+1)
+				+ "最大");
 			v.push_back(pStr);
 #endif
 		}

@@ -34,10 +34,11 @@ protected:
 	double m_fHRatio;
 	double m_fLRatio;
 public:
-	void DrawGrids(HDC _hdc);		// 表格绘制.
+	void DrawGrids(HDC _hdc);	// 表格绘制.
 	void DrawCurve(void); 		// 绘制曲线.
-
+	void DrawWave(HDC _hdc , double duty , double freq , double step,double startPos , double dt ,double phase);
 public:
+	inline void SetSize(int _w, int _h){m_iHeight = _h;m_iWidth = _w;}
 	inline void SetDuty(double _duty){ if (_duty <= 100 && _duty >= 1E-5) m_fDuty = _duty;}
 	inline void SetHvScale(double Ratio){ if (Ratio <= 100 && Ratio >= 1E-5) m_fHRatio = Ratio;}
 	inline void SetLvScale(double Ratio){ if (Ratio <= 100 && Ratio >= 1E-5) m_fLRatio = Ratio;}
@@ -47,8 +48,10 @@ public:
 	static void StartGdiProcess(void);
 	static void EndGdiProcess(void);
 	DataGrids(HDC _hdc,int width,int height,double _duty = 50,double hratio = 100 ,double lratio =100,DataItemSet * pD = NULL);
+
 	~DataGrids(void);
 	void SetDataSet(DataItemSet * pD);
 };
 
+void GetCfgData (int * p1,int *p2, int *p3);
 #endif

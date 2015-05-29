@@ -5,10 +5,13 @@
 
 #include "Unit1.h"
 #include "Unit2.h"
+#include "Unit3.h"
+#include "FormAuth.h"
 #include "SerialForm.h"
 #include "DataSouce.h"
 #include "ADOX_TLB.h"
 #include "Unit4.h"
+#include "ShowStatus.h"
 
 // ---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -135,9 +138,8 @@ void __fastcall TForm1::TestBtnClick(TObject *Sender)
 
 	StartTestMode(idx+1);
 
-
 	SndData(buf,idx+1);
-	PostMessage(Form4->Handle,WM_USER + 0x101,0,0);
+	//PostMessage(Form4->Handle,WM_USER + 0x101,0,0);
 	//this->CheckBox1->Checked = true;
 }
 
@@ -171,6 +173,14 @@ void __fastcall TForm1::ShowTestResult(int iTestMode)
 
 
 #define BLINK_PERIOD 400
+
+void __fastcall TForm1::SetGroupBox(TGroupBox * grp , bool bVal)
+{
+	for(int i =0  ;i < grp->ControlCount;i++)
+	{
+        grp->Controls[i]->Enabled = bVal;
+	}
+}
 
 void __fastcall TForm1::ShowTestBlink(bool TestEnd)
 {
@@ -249,16 +259,47 @@ void __fastcall TForm1::ShowData(DataItemSet & ds)
 	//表格中显示数据.
 	for(int i = 0;i < 6;i++)
 	{
-		SG_WaveData->Cells[1][i+1] = FloatToStrF(ds[i].GetMin(),ffGeneral,10,2);
-		SG_WaveData->Cells[2][i+1] = FloatToStrF(ds[i].GetAvg(),ffGeneral,10,2);
-		SG_WaveData->Cells[3][i+1] = FloatToStrF(ds[i].GetMax(),ffGeneral,10,2);
+		SG_WaveData->Cells[1][i+1] = FloatToStrF(ds[i].GetMin(),ffFixed,10,1);
+		SG_WaveData->Cells[2][i+1] = FloatToStrF(ds[i].GetAvg(),ffFixed,10,1);
+		SG_WaveData->Cells[3][i+1] = FloatToStrF(ds[i].GetMax(),ffFixed,10,1);
 	}
+
+	SG_WaveData->Cells[1][7] = FloatToStrF(ds[0].GetMax()/60,ffFixed,10,1);
+	SG_WaveData->Cells[2][7] = FloatToStrF(ds[0].GetAvg()/60,ffFixed,10,1);
+	SG_WaveData->Cells[3][7] = FloatToStrF(ds[0].GetMin()/60,ffFixed,10,1);
 
 	m_stDg->SetDuty(ds[1].GetMax());
 	m_stDg->SetHvScale(100*ds[3].GetMax()/1.60);
 	m_stDg->SetLvScale(100*ds[3].GetMin()/1.60);
 	PaintBox1->Invalidate();
 }
+
+
+int __fastcall TForm1::GetIndex(void)
+{
+	if(ADOConnection1->Connected == false)
+	{
+		return -1;
+	}
+
+	ADOQuery1->SQL->Clear();
+	ADOQuery1->SQL->Add("select max(id) as maxIndex from " + m_sTableName);
+	ADOQuery1->Open();
+
+	if(ADOQuery1->RecordCount == 0)
+	{
+		return 0; // 表中尚无任何记录.
+	}
+
+	int id = ADOQuery1->FieldByName("maxIndex")->AsInteger;
+
+    ADOQuery1->SQL->Clear();
+
+	//ShowMessage("id = " + IntToStr(id));
+
+    return id;
+}
+
 
 bool __fastcall TForm1::prepareDataBase(void)
 {
@@ -277,7 +318,7 @@ bool __fastcall TForm1::prepareDataBase(void)
 		WideString s = "Provider=Microsoft.Jet.OLEDB.4.0;" "Data Source='" +
 			(WideString)sPath + "';Jet OLEDB:Engine Type=5";
 		TADOXCatalog *pCatalog = new TADOXCatalog(NULL);
-		TADOXTable *pt = new TADOXTable(NULL);
+		//TADOXTable *pt = new TADOXTable(NULL);
 		pCatalog->Create(s.c_bstr());
 	}
 
@@ -354,7 +395,7 @@ bool __fastcall TForm1::storeDataBase(void)
 
 
 const double fusScale  = 1.0f/16;
-const double DutyScale = 100.0f/1024;
+const double DutyScale = 1024/100.0;
 const double voltScale = 5000/(4096*2.65);
 
 bool __fastcall TForm1::ParseData(unsigned char * buf,unsigned int len)
@@ -377,14 +418,14 @@ bool __fastcall TForm1::ParseData(unsigned char * buf,unsigned int len)
 		return false; // 帧头错误.
 	}
 
-	if( buf[2] > len - 3) // 长度不够.
+	if( (int)(buf[2]) > (int)(len - 3)) // 长度不够.
 	{
 		mm_ComRec->Lines->Add("长度错误");
 		return false;
 	}
 
 
-	for(int i = 3 ;i < len -1 ;i++)
+	for(int i = 3 ;i < (int)(len -1) ;i++)
 	{
 		checksum += buf[i];
 	}
@@ -471,13 +512,13 @@ bool __fastcall TForm1::ParseData(unsigned char * buf,unsigned int len)
 		dmin = _MAKELONG(pd[0],pd[1],pd[2],pd[3]);
 		pd += 4;
 		da   = _MAKELONG(pd[0],pd[1],pd[2],pd[3]) / cycles[Mode];
-		pd += 4;
+		//pd += 4;
 
 
 		std::vector<double> vd ;
-		vd.push_back(60000000.0/pmax*fusScale);
-		vd.push_back(60000000.0/pa*fusScale);
-		vd.push_back(60000000.0/pmin*fusScale);
+		vd.push_back(60000000.0/(pmin*fusScale*48));
+		vd.push_back(60000000.0/(pa*fusScale*48));
+		vd.push_back(60000000.0/(pmax*fusScale*48));
 		vd.push_back(dmax/DutyScale);
 		vd.push_back(da/DutyScale);
 		vd.push_back(dmin/DutyScale);
@@ -494,9 +535,8 @@ bool __fastcall TForm1::ParseData(unsigned char * buf,unsigned int len)
 		vd.push_back(Fa*fusScale);
 		vd.push_back(Fmin*fusScale);
 
-
 		// 查询数据内容.
-		this->UpdateDateItemByVector(vd);
+		this->UpdateDateItemByVector(vd,(int)Mode);
 	}
 	else
 	{
@@ -543,105 +583,20 @@ void __fastcall TForm1::OnRecvMessage(TMessage &msg)
 }
 
 // ---------------------------------------------------------------------------
-void __fastcall TForm1::btnSqlTestClick(TObject *Sender)
-{
-#if 0
-	static TestProcedure t = TestProcedure();
-
-	UnicodeString sql;
-	// 创建数据库.
-	UnicodeString sPath;
-
-	if (CheckFilePath(sPath) == false)
-	{
-		WideString s = "Provider=Microsoft.Jet.OLEDB.4.0;" "Data Source='" +
-			(WideString)sPath + "';Jet OLEDB:Engine Type=5";
-		TADOXCatalog *pCatalog = new TADOXCatalog(NULL);
-		TADOXTable *pt = new TADOXTable(NULL);
-		pCatalog->Create(s.c_bstr());
-	}
-
-	sPath = "Provider=Microsoft Jet 4.0 OLE DB Provider;Data Source=" + sPath;
-	sPath += ";Persist Security Info=False";
-	ADOConnection1->ConnectionString = sPath;
-	ADOConnection1->LoginPrompt = false;
-
-	try
-	{
-		ADOConnection1->Open();
-	}
-	catch (...)
-	{
-	}
-
-	if (ADOConnection1->Connected)
-	{
-		ShowSysInfo("连接成功");
-	}
-	else
-	{
-		ShowSysInfo("连接失败");
-	}
-	ADOQuery1->Connection = ADOConnection1;
-
-	UnicodeString sTableName = "FirstTable";
-	TStrings *pList = new TStringList();
-	bool bHasTable = false;
-
-	ADOConnection1->GetTableNames(pList, false);
-
-	for (int i = 0; i < pList->Count; i++)
-	{
-		if (pList->Strings[i] == sTableName)
-		{
-			bHasTable = true;
-			break;
-		}
-	}
-
-	if (bHasTable == false)
-	{
-		sql = "";
-		t.SqlCreateTable(sTableName, sql);
-
-		ADOQuery1->SQL->Clear();
-		ADOQuery1->SQL->Add(sql);
-		ADOQuery1->ExecSQL();
-		ADOQuery1->SQL->Clear();
-	}
-
-	// 插入记录.
-#if 1
-	// for (int i = 0; i < 10; i++) {
-	sql = "";
-	t.SqlInsertTableValue(sTableName, sql);
-	ADOQuery1->SQL->Add(sql);
-
-	//Memo1->Lines->Add("执行SQL:" + sql);
-	// }
-
-	ADOQuery1->ExecSQL();
-	ADOQuery1->SQL->Clear();
-#endif
-
-	ADOConnection1->Close();
-#endif
-}
-// ---------------------------------------------------------------------------
-
 void __fastcall TForm1::Button2Click(TObject *Sender)
 {
-	static int s_iDataTestCounter = 0;
-	static TestProcedure t = TestProcedure();
-
-	t[0].SetDutyVal(45, 44);
-	t[1].SetFreqVal(20, 19);
-	t[2].SetLVVal(1930, 1920);
-	UnicodeString sql;
-
-	t.SqlInsertTableValue("t1", sql);
-
 	UnicodeString sTime,sNo;
+    static int s_iDataTestCounter = GetIndex(); // 查询当前最大索引.
+
+/*    OKRightDlg->SetData(this->m_stTestProcedure);
+	OKRightDlg->ShowModal();
+
+	if(OKRightDlg->GetResult() == false)
+	{
+		ShowMessage("数据未存入数据库");
+		return;
+	}
+*/
 	sTime = ::Date().FormatString("yyyymmdd");
 	sNo = "";
 	sNo.sprintf(L"%04d",++s_iDataTestCounter);
@@ -650,6 +605,7 @@ void __fastcall TForm1::Button2Click(TObject *Sender)
 
 	labelSerialNO->Caption = sTime;
 
+	storeDataBase();
 	//Memo1->Lines->Add(sql);
 }
 // ---------------------------------------------------------------------------
@@ -669,6 +625,9 @@ void __fastcall TForm1::PaintBox1Paint(TObject *Sender)
 	g.DrawLine(&p,PaintBox1->Width,0,0,PaintBox1->Height);
 	*/
 
+	static phase = 0;
+	static pos = 0;
+
 	if(PaintBox1->Visible == false)
 	{
 	    return;
@@ -677,11 +636,21 @@ void __fastcall TForm1::PaintBox1Paint(TObject *Sender)
 	if (m_stDg == NULL)
 	{
 		m_stDg = new DataGrids(PaintBox1->Canvas->Handle,PaintBox1->Width,PaintBox1->Height);
+		 PaintBox1->ControlStyle = PaintBox1->ControlStyle << csOpaque;
 	}
 
-	m_stDg->DrawGrids(PaintBox1->Canvas->Handle);
+
+    if(!m_bUpdateFlag) return;
+
+	phase += 1;
+	m_stDg->DrawWave(PaintBox1->Canvas->Handle,50,0.2,1,0,0.5,phase);
 }
 //---------------------------------------------------------------------------
+
+void __fastcall TForm1::OnEraseBkgnd(TWMEraseBkgnd & msg)
+{
+	msg.Result = true;
+}
 
 void __fastcall TForm1::FormClose(TObject *Sender, TCloseAction &Action)
 {
@@ -692,11 +661,13 @@ void __fastcall TForm1::FormClose(TObject *Sender, TCloseAction &Action)
 	{
 		ADOConnection1->Close();
 	}
+
+	CloseMappedFile();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::stbSysBarDrawPanel(TStatusBar *StatusBar, TStatusPanel *Panel,
-          const TRect &Rect)
+		  const TRect &Rect)
 {
 	if (Panel->Index == 2)
 	{
@@ -766,8 +737,8 @@ void __fastcall TForm1::TrackBar2Change(TObject *Sender)
 
 void __fastcall TForm1::Button1Click(TObject *Sender)
 {	//
-
-    double v1,v2 ;
+#if 0
+	double v1,v2 ;
 	DataItemSet *pds = new DataItemSet(0);
 	//频率.
 
@@ -776,11 +747,11 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
 	pds->SetFreqVal(MAXVAL(v1,v2),MINVAL(v1,v2));
 
 	v1 = 50 + random(10);
-    v2 = 50 + random(10);
+	v2 = 50 + random(10);
 	pds->SetDutyVal(MAXVAL(v1,v2),MINVAL(v1,v2));
 
 	v1 = 0.6 + randomf(0.24);
-    v2 = 0.6 + randomf(0.24);
+	v2 = 0.6 + randomf(0.24);
 	pds->SetLVVal(MAXVAL(v1,v2),MINVAL(v1,v2));
 
 	v1 = 1.2 + randomf(0.4);
@@ -788,7 +759,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
 	pds->SetHVVal(MAXVAL(v1,v2),MINVAL(v1,v2));
 
 	v1 = randomf(2.5);
-    v2 = randomf(2.5);
+	v2 = randomf(2.5);
 	pds->SetRTVal(MAXVAL(v1,v2),MINVAL(v1,v2));
 
 	v1 = randomf(2.5);
@@ -798,6 +769,12 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
 	ShowData(*pds);
 
 	delete pds;
+#endif
+
+	static int deltpase = 0;
+
+
+
 }
 //---------------------------------------------------------------------------
 
@@ -809,22 +786,38 @@ void __fastcall TForm1::CommTimerTimer(TObject *Sender)
 
 	if (CheckBox1->Checked)
 	{
-		Button1Click(Button1);
+		//Button1Click(Button1);
 	}
 
 	ShowTestBlink(iTestEnd > 0);
 	ExecTestMode();
 
 
-	iSeq = (++iSeq) % 3;
+	if(comx.IsPortOpen())
+	{
+		iSeq = (++iSeq) % 3;
+		ImageFan->Picture->Assign(m_aFanIcons[iSeq]);
+	}
 
-    ImageFan->Picture->Assign(m_aFanIcons[iSeq]);
+    m_bUpdateFlag = true;
+	PaintBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
 
+void __fastcall TForm1::SearchPorts(void)
+{
+    std::vector<UnicodeString> v;
+	cbSerialPorts->Items->Clear();
+    EmurateSerialPorts(v);
 
+	for(int i = 0 ;i < (int)v.size();i++)
+	{
+        cbSerialPorts->Items->Add(v[i]);
+	}
 
-
+	cbSerialPorts->Style = csDropDownList;
+    cbSerialPorts->ItemIndex = -1;
+}
 
 void __fastcall TForm1::FormPaint(TObject *Sender)
 {
@@ -852,23 +845,35 @@ void __fastcall TForm1::bitbtn_StoreClick(TObject *Sender)
 	iconDataBase->Picture->Assign(m_aBmpSt[idx]);
 	iconDevice->Picture->Assign(m_aBmpSt[idx]);
 	*/
+	if(comx.IsPortOpen() == false)
+    {
+		if(cbSerialPorts->Items->Count == 0 || cbSerialPorts->ItemIndex == -1)
+		{
+			return;
+		}
 
-	if(comx.OpenPort("COM1",115200))
-	{
-		m_iBmpIdx = 1;
-        comx.SetNotifyWindow(this->Handle);
+		if(comx.OpenPort(cbSerialPorts->Text))
+		{
+			m_iBmpIdx = 1;
+			comx.SetNotifyWindow(this->Handle);
+			cbSerialPorts->Enabled = false;
+			SetGroupBox(grpTest,true);
+			MessageBeep(MB_ICONWARNING);
+		}
+		else
+		{
+            ShowMessage("打开端口失败!");
+		}
 	}
 	else
 	{
 		comx.ClosePort();
-        m_iBmpIdx = 0;
+		m_iBmpIdx = 0;
+		cbSerialPorts->Enabled = true;
+        SetGroupBox(grpTest,false);
 	}
 }
 //---------------------------------------------------------------------------
-
-
-
-
 void __fastcall TForm1::bitbtn_StoreMouseDown(TObject *Sender, TMouseButton Button,
           TShiftState Shift, int X, int Y)
 {
@@ -884,10 +889,10 @@ void __fastcall TForm1::bitbtn_StoreMouseUp(TObject *Sender, TMouseButton Button
 //---------------------------------------------------------------------------
 
 
-void __fastcall TForm1::UpdateDateItemByVector(std::vector<double> &v)
+void __fastcall TForm1::UpdateDateItemByVector(std::vector<double> &v,int idx)
 {
-	m_stTestProcedure[iCurrStep-1].UpdateAllData(v);
-	ShowData(m_stTestProcedure[iCurrStep-1]);
+	m_stTestProcedure[idx].UpdateAllData(v);
+	ShowData(m_stTestProcedure[idx]);
 
 }
 
@@ -913,7 +918,7 @@ void __fastcall TForm1::UpdateDataItem(double fmax,double fmin,double dmax,doubl
 bool TForm1::SndData(unsigned char *pbuf, unsigned char mode , unsigned short vh, unsigned short vl)
 {
 	int idx =  0;
-    unsigned char checksum = 0;
+	unsigned char checksum = 0;
 
 	pbuf[idx++] = 0xaa;
 	pbuf[idx++] = 0x55;
@@ -931,18 +936,33 @@ bool TForm1::SndData(unsigned char *pbuf, unsigned char mode , unsigned short vh
 
 	pbuf[idx++] = checksum;
 
-    return Form4->SendMsg(pbuf,idx);
+	if(comx.IsPortOpen() == false)
+	{
+        return false;
+	}
+
+	return comx.WritePort(pbuf,idx);
 }
 
 void __fastcall TForm1::FormCreate(TObject *Sender)
 {
 	// 启动时显示启动窗口.
-    //
+	//
+	SetGroupBox(grpTest,false);
+	if(CreateApplicationFile(&pCfg) == false)
+	{
+        ShowMessage("无法初始化配置文件");
+	}
+
+	SearchPorts();
+
+    Label4->Font->Color = clBlue;
+
 	// stbSysBar->Font->Height = stbSysBar->Height - 6;
 	// SG_WaveData->DrawingStyle =  gdsClassic;
 
 	mm_ComRec->Lines->Clear();
-    mm_ComRec->Visible = false;
+	mm_ComRec->Visible = false;
 
 	// 设置表格内容.
 	UnicodeString sTable[] =
@@ -954,9 +974,10 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
 		"高电平电压",
 		"上升沿时间",
 		"下降沿时间",
+		"频率"
 	};
 
-	for(int i = 0;i < ITEMS_OF(sTable);i++)
+	for(int i = 0;i < (int)ITEMS_OF(sTable);i++)
 	{
 		SG_WaveData->Cells[0][i] = sTable[i];
 	}
@@ -972,26 +993,28 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
 	SG_WaveData->Cells[4][4] = "mV";
 	SG_WaveData->Cells[4][5] = "μs";
 	SG_WaveData->Cells[4][6] = "μs";
-
+	SG_WaveData->Cells[4][7] = "Hz";
 	//TrackBar1->Max = 100;
 	//TrackBar2->Max = 100;
 	// 防止闪烁.
 	this->DoubleBuffered = true;
 
-	HRGN hRgnR = CreateEllipticRgn(3,3,bitbtn_Store->Width-3,bitbtn_Store->Height-3);
+	HRGN hRgnR = CreateEllipticRgn(1,1,bitbtn_Store->Width-1,bitbtn_Store->Height-1);
 	SetWindowRgn(bitbtn_Store->Handle,hRgnR,TRUE);
 
 	LoadResources();
 	SearchComponents();
-    InitComponents();
+	InitComponents();
 
 	bitbtn_Store->Glyph = m_aBmp[0];
 	m_iBmpIdx = 0;
 
 	iconDataBase->Picture->Assign(m_aBmpSt[0]);
 	iconDevice->Picture->Assign(m_aBmpSt[0]);
-
 	prepareDataBase();
+
+	ED_HighVoltage->Text = FloatToStrF(voltageH/1000.0,ffGeneral,10,3);
+	ED_LowVoltage->Text  = FloatToStrF(voltageL/1000.0,ffGeneral,10,3);
 }
 //---------------------------------------------------------------------------
 
@@ -1005,4 +1028,45 @@ void __fastcall TForm1::FormKeyDown(TObject *Sender, WORD &Key, TShiftState Shif
 	}
 }
 //---------------------------------------------------------------------------
+
+void __fastcall TForm1::btnSqlTestClick(TObject *Sender)
+{
+	//
+	int idx = this->GetIndex();
+
+	ShowMessage("MaxIndex = " + IntToStr(idx));
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::FormResize(TObject *Sender)
+{
+	if(m_stDg != NULL)
+	{
+		m_stDg->SetSize(PaintBox1->Width,PaintBox1->Height);
+	}
+
+	SG_WaveData->DefaultRowHeight = (SG_WaveData->Height - 10) / SG_WaveData->RowCount;
+}
+//---------------------------------------------------------------------------
+
+
+
+
+void __fastcall TForm1::Button3Click(TObject *Sender)
+{
+    //UnitFormAuth->Parent = this;
+	if(UnitFormAuth->IsAuthed() == false)
+	{
+		UnitFormAuth->ShowModal();
+	}
+
+	if(UnitFormAuth->IsAuthed())
+	{
+        UnitFormAuth->ResetAuth();
+        FormSysCfg->ShowModal();
+	}
+}
+//---------------------------------------------------------------------------
+
 

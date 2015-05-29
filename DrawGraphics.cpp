@@ -1,4 +1,5 @@
 #include "DrawGraphics.h"
+#include <queue>
 
 Gdiplus::GdiplusStartupInput DataGrids::m_stGdiplusStartupInput; // 用于启动.
 ULONG_PTR  DataGrids::m_pulGdiplusToken = static_cast<ULONG_PTR>(0);
@@ -35,6 +36,8 @@ DataGrids::DataGrids(HDC _hdc,int width , int height , double _duty,double hrati
 {
 }
 
+
+
 DataGrids::~DataGrids(void)
 {
     delete m_stGrp;
@@ -57,7 +60,7 @@ void DataGrids::DrawGrids(HDC _hdc)
 
 	/*FontFamily fontFamily(L"楷体_GB2312");
 	Font font(&fontFamily, 30, FontStyleRegular, UnitPixel);
-    */
+	*/
 	Gdiplus::SolidBrush solidBrush(Gdiplus::Color(255, 0, 0, 255));
 	Gdiplus::Pen p(Gdiplus::Color(255, 0, 0, 0),1);
 	Gdiplus::AdjustableArrowCap cap(8,4,true);
@@ -67,7 +70,7 @@ void DataGrids::DrawGrids(HDC _hdc)
 #define X(_x) UserX((_x)+xAxisOffset)
 #define Y(_y) UserY((_y)+yAxisOffset)
 	// 刻度线.Y轴.
-    p.SetColor(Gdiplus::Color(255, 0, 0, 255));
+	p.SetColor(Gdiplus::Color(255, 0, 0, 255));
 	for(int i = 0; i * yMarkSpace < m_iHeight-yMarkSpace-8;i++)
 	{
 		m_stGrp->DrawLine(&p,X(0),Y(0+i*yMarkSpace),X(yMarkHeight+(((i%5)==0)?yMarkHeight:0)),Y(0+i*yMarkSpace));
@@ -77,9 +80,9 @@ void DataGrids::DrawGrids(HDC _hdc)
 	{
 		m_stGrp->DrawLine(&p,X(i*xMarkSpace),Y(0),X(i*xMarkSpace),Y(xMarkHeight+((i%5)==0?xMarkHeight:0)));
 	}
-    p.SetColor(Gdiplus::Color(255, 0, 0, 0));
+	p.SetColor(Gdiplus::Color(255, 0, 0, 0));
 	// Draw X,Y axises.
-    p.SetCustomEndCap(&cap);
+	p.SetCustomEndCap(&cap);
 	m_stGrp->DrawLine(&p,X(0),Y(0),X(0),Y(m_iHeight)); // Draw Y axis
 	m_stGrp->DrawLine(&p,X(0),Y(0),X(m_iWidth),Y(0));  // Draw X axis
 
@@ -244,5 +247,55 @@ void DataGrids::DrawCurve(void)
 	delete pComm;
 #undef X(_x)
 #undef Y(_y)
+}
 
+int GetVal(double duty, double freq,double t)//相位用°表示.
+{
+	double period;
+
+	freq = (freq <1E-2)? 1E-2:(freq > 1E4) ? 1E4:freq;
+
+	period = 1/freq;
+
+	duty = (duty > 100) ? 100: (duty < 0) ? 0:duty;
+
+	t =  t - ((int)( t / period )) * period;
+
+	double tr = period * duty / 100;
+
+	if(t < tr)
+		return 1;
+	else
+		return 0;
+
+}
+
+#define GetPosition(x) ((x == 0)? (((m_fLRatio + 100)/100) * 0.1 * m_iHeight):((((m_fHRatio/100) * 0.1 + 0.8)* m_iHeight)))
+
+// 曲线绘制.
+void DataGrids::DrawWave(HDC _hdc , double duty , double freq , double step,double startPos , double dt ,double phase)
+{
+	Gdiplus::PointF ps,pe;
+	int state = GetVal(duty,freq,0);
+
+	Gdiplus::Pen pen(Gdiplus::Color(0,0,255),1);
+	Gdiplus::Pen penr(Gdiplus::Color(0,0,0),1);
+
+	Gdiplus::Graphics g(_hdc);
+
+	//g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+
+	step = (step < 1) ? 1 : step ;
+	startPos = (startPos > m_iWidth) ? m_iWidth:startPos;
+
+	ps = Gdiplus::PointF(startPos,GetPosition(state));
+	for(int i =0 ;i < (m_iWidth - startPos) / step ; i++)
+	{
+		state = GetVal(duty,freq,(i + phase)*dt);
+		pe = Gdiplus::PointF(i*step + startPos ,GetPosition(state));
+		g.DrawLine(&pen,ps,pe);
+		ps = pe;
+	}
+
+	g.DrawRectangle(&penr,0,0,m_iWidth-1,m_iHeight-1);
 }

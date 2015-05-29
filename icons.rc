@@ -1,0 +1,24 @@
+bmpOK		BITMAP	icon/OK_80.bmp
+bmpWrong	BITMAP  icon/Wrong_80.bmp
+bmpPress	BITMAP  icon/OK_80_Pressed.bmp
+bmpPressW	BITMAP	icon/Wrong_80_pressed.bmp
+bmpDataOK	RCDATA 	icon/DataOK.png
+bmpDataWrong	RCDATA 	icon/DataWrong.png
+bmpTestNG       RCDATA  icon/NG.png
+bmpTestPass     RCDATA  icon/Pass.png
+png90NotTest      RCDATA  icon/progress90/NotTest.png
+png90TestNg       RCDATA  icon/progress90/NG.png
+png90TestPass         RCDATA  icon/progress90/Pass.png
+png90Progress1    RCDATA  icon/progress90/InProgress1.png
+png90Progress2    RCDATA  icon/progress90/InProgress2.png
+png90Progress3    RCDATA  icon/progress90/InProgress3.png
+png36NotTest      RCDATA  icon/progress36/NotTest.png
+png36TestNg       RCDATA  icon/progress36/NG.png
+png36TestPass         RCDATA  icon/progress36/Pass.png
+png36Progress1    RCDATA  icon/progress36/InProgress1.png
+png36Progress2    RCDATA  icon/progress36/InProgress2.png
+png36Progress3    RCDATA  icon/progress36/InProgress3.png
+fan1		  BITMAP  icon/0¶È.bmp
+fan2		  BITMAP  icon/30¶È.bmp
+fan3		  BITMAP  icon/60¶È.bmp
+

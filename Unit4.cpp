@@ -146,14 +146,14 @@ bool TForm4::ParseData(unsigned char * buf,unsigned int len)
 		return false; // 帧头错误.
 	}
 
-	if( buf[2] > len - 3) // 长度不够.
+	if( (int)(buf[2]) > (int)(len - 3)) // 长度不够.
 	{
 		mm_ComRec->Lines->Add("长度错误");
 		return false;
 	}
 
 
-	for(int i = 3 ;i < len -1 ;i++)
+	for(int i = 3 ;i < (int)(len -1) ;i++)
 	{
 		checksum += buf[i];
 	}
@@ -266,7 +266,7 @@ bool TForm4::ParseData(unsigned char * buf,unsigned int len)
 
 
 		// 查询数据内容.
-		Form1->UpdateDateItemByVector(vd);
+		Form1->UpdateDateItemByVector(vd,0);
 	}
 	else
 	{
@@ -387,14 +387,14 @@ void __fastcall TForm4::FormCreate(TObject *Sender)
 
      EmurateSerialPorts(vcom);
 
-	 for(int i = 0 ;i < vcom.size();i++)
+	 for(int i = 0 ;i < (int)vcom.size();i++)
 	 {
 		cbSerialPorts->Items->Add(vcom[i]);
 	 }
 	 cbSerialPorts->ItemIndex = -1;
 
 
-	 for(int i = 0;i < sizeof(SerialPortBase::BaudRateList)/sizeof(SerialPortBase::BaudRateList[0]);i++)
+	 for(int i = 0;i < (int)(sizeof(SerialPortBase::BaudRateList)/sizeof(SerialPortBase::BaudRateList[0]));i++)
 	 {
 		cbBaudRate->Items->Add(IntToStr(SerialPortBase::BaudRateList[i]));
 	 }

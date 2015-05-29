@@ -6,7 +6,7 @@
         <AppType>Application</AppType>
         <MainSource>MTester.cpp</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Config Condition="'$(Config)'==''">Release</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>1</TargetedPlatforms>
     </PropertyGroup>
@@ -162,6 +162,12 @@
         <None Include="SerialPort.h">
             <BuildOrder>10</BuildOrder>
         </None>
+        <CppCompile Include="ShowStatus.cpp">
+            <Form>OKRightDlg</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>ShowStatus.h</DependentOn>
+            <BuildOrder>12</BuildOrder>
+        </CppCompile>
         <CppCompile Include="Unit1.cpp">
             <Form>Form1</Form>
             <FormType>dfm</FormType>
@@ -180,6 +186,7 @@
             <DependentOn>Unit4.h</DependentOn>
             <BuildOrder>9</BuildOrder>
         </CppCompile>
+        <FormResources Include="ShowStatus.dfm"/>
         <FormResources Include="Unit4.dfm"/>
         <FormResources Include="Unit2.dfm"/>
         <FormResources Include="Unit1.dfm"/>
@@ -651,12 +658,12 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
             </Deployment>
             <Platforms>

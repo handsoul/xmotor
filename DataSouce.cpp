@@ -6,6 +6,116 @@
 #include <memory>
 using namespace std;
 
+const Params DefaultParams =
+{
+	{	 1.1,	1.3		},
+	{	0.65,	0.85	},
+	{     45,   55		},
+	{
+		{	0.9,	1.0	},
+		{	 39,	41	},
+		{	1990,	2010},
+	},
+    {   1.18,   0.86    }
+};
+
+static HANDLE hFILE = INVALID_HANDLE_VALUE;
+static HANDLE hFMAP = INVALID_HANDLE_VALUE;
+static void * pMappedAddr = NULL;
+bool CreateApplicationFile(ConfigOjb ** ppojb)
+{
+	HANDLE hFile = CreateFile(	L"MotorTester.dll",
+								GENERIC_READ|GENERIC_WRITE,
+								0,
+								NULL,
+								OPEN_ALWAYS,
+								0,
+								NULL);
+	if(INVALID_HANDLE_VALUE == hFile)
+	{
+		return false;
+	}
+
+	HANDLE hFileMapping = CreateFileMapping(hFile,
+											NULL,
+											PAGE_READWRITE,
+											0,
+											MAX_CONFIG_FILE_SIZE,
+											NULL);
+	if( INVALID_HANDLE_VALUE == hFileMapping)
+	{
+		CloseHandle(hFile);
+		return false;
+	}
+
+	void *p = MapViewOfFile(hFileMapping,FILE_MAP_READ|FILE_MAP_WRITE,0,0,MAX_CONFIG_FILE_SIZE);
+	if(p == NULL)
+	{
+		CloseHandle(hFileMapping);
+		CloseHandle(hFile);
+		return false;
+	}
+
+	ConfigOjb * pobj = (ConfigOjb*)p;
+
+	//检查数据.
+	int i = 0;
+	for(;i < (int)sizeof(pobj->MagicCode);i++)
+	{
+		if(pobj->MagicCode[i] != (unsigned char)i)
+		{
+			break;
+		}
+	}
+
+	if(i != (int)sizeof(pobj->MagicCode))
+	{
+		//需要重新初始化.
+		for(; i < (int)sizeof(pobj->MagicCode);i++)
+		{
+			pobj->MagicCode[i] = (unsigned char)i;
+		}
+		//重新配置参数.
+		pobj->Params = DefaultParams;
+
+		// 拷贝名.
+
+        //Todo:修改为Base64编码.
+		UnicodeString Name = "Admini";
+        UnicodeString Password = "000000";
+		memcpy(pobj->UserName,Name.c_str(),sizeof(wchar_t)*Name.Length());
+		memcpy(pobj->Password,Password.c_str(),sizeof(wchar_t)*Password.Length());
+
+        SyncToMappdFile();
+	}
+
+	hFILE = hFile;
+	hFMAP = hFileMapping;
+    pMappedAddr = p;
+
+	return true;
+}
+
+
+inline void SyncToMappdFile(void)
+{
+	if(pMappedAddr != NULL)
+	{
+		FlushViewOfFile(pMappedAddr,MAX_CONFIG_FILE_SIZE);
+    }
+}
+
+
+void CloseMappedFile(void)
+{
+	if(pMappedAddr != NULL)
+	{
+		UnmapViewOfFile(pMappedAddr);
+		CloseHandle(hFMAP);
+		CloseHandle(hFILE);
+	}
+}
+
 /*
  *  检查文件是否存在.
  */

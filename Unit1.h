@@ -55,7 +55,7 @@ __published: // IDE-managed Components
 	TLabel *Label1;
 	TLabel *labelTestCounter;
 	TImage *ImageFan;
-	TGroupBox *GroupBox1;
+	TGroupBox *grpTest;
 	TBitBtn *btnTestMode1;
 	TImage *ImageMode1;
 	TBitBtn *btnTestMode3;
@@ -66,13 +66,17 @@ __published: // IDE-managed Components
 	TLabel *labelSerialNO;
 	TButton *Button2;
 	TImage *ImageTestModeOverAll;
-	TPaintBox *PaintBox1;
 	TEdit *ED_HighVoltage;
 	TEdit *ED_LowVoltage;
 	TLabel *Label3;
 	TLabel *Label5;
 	TMemo *mm_ComRec;
-	void __fastcall btnSqlTestClick(TObject *Sender);
+	TImage *Image1;
+	TComboBox *cbSerialPorts;
+	TPaintBox *PaintBox1;
+	TLabel *Label6;
+	TLabel *Label7;
+	TButton *Button3;
 	void __fastcall Button2Click(TObject *Sender);
 	void __fastcall PaintBox1Paint(TObject *Sender);
 	void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
@@ -91,6 +95,9 @@ __published: // IDE-managed Components
 		  int X, int Y);
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall FormKeyDown(TObject *Sender, WORD &Key, TShiftState Shift);
+	void __fastcall btnSqlTestClick(TObject *Sender);
+	void __fastcall FormResize(TObject *Sender);
+	void __fastcall Button3Click(TObject *Sender);
 
 
 private: // User declarations
@@ -103,18 +110,21 @@ private: // User declarations
 
 	static inline GetLowLimit(short h, short l)
 	{
-        return (short)(h-l)*0.95f + l;
+		return (short)(h-l)*0.95f + l;
 	}
 
-	static const unsigned short defaultVoltH = (1180 * 2.65f * 4096  / 5000);
-	static const unsigned short defaultVoltL = ( 860 * 2.65f * 4096  / 5000);
+	static const unsigned short voltageH = 1180;
+	static const unsigned short voltageL = 860;
 
-
+	static const unsigned short defaultVoltH = (voltageH * 2.65f * 4096  / 5000);
+	static const unsigned short defaultVoltL = (voltageL * 2.65f * 4096  / 5000);
 
 	TBitmap *m_aBmp[4];
 	TPngImage *m_aBmpSt[2];
 	int m_iBmpIdx;
 	int m_aiFlags[3];
+
+    ConfigOjb * pCfg;
 
 	TBitBtn* aBtnTestMode[3]; // 3个测试模式.
 	TImage * aImageMode[3];   // 用于显示状态.
@@ -136,15 +146,20 @@ private:
 	// 测试过程相关.
 	int iCurrStep ; //当前测试步骤.
 	int iTestEnd;
-    UnicodeString m_sTableName;
+    bool m_bUpdateFlag;
+
+	UnicodeString m_sTableName;
 	TestProcedure m_stTestProcedure;// = TestProcedure();
 
-    SerialPortBase comx;
+	SerialPortBase comx;
 
+	void __fastcall SetGroupBox(TGroupBox * grp , bool bVal);
 	void __fastcall StartTestMode(int i);
 	void __fastcall ShowTestBlink(bool TestEnd = false);
 	void __fastcall ShowTestResult(int iTestMode);
 	void __fastcall ExecTestMode(void);
+
+	int __fastcall GetIndex(void);
 
 	bool SndData(unsigned char *pbuf, unsigned char mode , unsigned short vh = defaultVoltH, unsigned short vl = defaultVoltL);
 
@@ -155,17 +170,20 @@ private:
 	bool __fastcall ClosePort(void);  // 断开串口...
 
 	void __fastcall OnRecvMessage(TMessage &msg);
+	void __fastcall OnEraseBkgnd(TWMEraseBkgnd& msg);
 
 	bool __fastcall ParseData(unsigned char * buf,unsigned int len);
 	BEGIN_MESSAGE_MAP
-		MESSAGE_HANDLER(MSG_RECV_COMMDATA,TMessage,OnRecvMessage)
+		VCL_MESSAGE_HANDLER(MSG_RECV_COMMDATA,TMessage,OnRecvMessage)
+		//VCL_MESSAGE_HANDLER(WM_ERASEBKGND,TWMEraseBkgnd,OnEraseBkgnd)
 	END_MESSAGE_MAP(TForm)
 
 
 public : // User declarations
 	__fastcall TForm1(TComponent* Owner);
+	void __fastcall SearchPorts(void);
 
-	void __fastcall TForm1::UpdateDateItemByVector(std::vector<double> &v);
+	void __fastcall TForm1::UpdateDateItemByVector(std::vector<double> &v,int idx);
 
 	__fastcall void UpdateDataItem( double ,double ,double ,double ,double ,double ,
 								double ,double ,double ,double ,double ,double );
