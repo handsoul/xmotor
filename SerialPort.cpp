@@ -17,7 +17,7 @@ SerialPortBase::~SerialPortBase(void)
 	ClosePort();
 	if(pthread != NULL)
 	{
-//        pthread->m_bTerminated = true;
+//      pthread->m_bTerminated = true;
 		pthread->ThreadResume();//线程恢复.
 		pthread->Terminate();
 		pthread->WaitFor();
@@ -86,7 +86,7 @@ bool SerialPortBase::OpenPort(UnicodeString strCommName,int baud,int stopBits,in
 
 	//m_stTimeout.ReadTotalTimeoutConstant = 100;
 	//m_stTimeout.ReadTotalTimeoutMultiplier = 1;
-	m_stTimeout.ReadIntervalTimeout = 100; // 字符间超时.设置位100ms,若100ms内无数据则认为无法读取数据.
+	m_stTimeout.ReadIntervalTimeout = 50; // 字符间超时.设置位100ms,若100ms内无数据则认为无法读取数据.
 
 	if (SetCommTimeouts(hdl,&m_stTimeout) == false )
 	{

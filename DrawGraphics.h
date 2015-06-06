@@ -36,7 +36,7 @@ protected:
 public:
 	void DrawGrids(HDC _hdc);	// 表格绘制.
 	void DrawCurve(void); 		// 绘制曲线.
-	void DrawWave(HDC _hdc , double duty , double freq , double step,double startPos , double dt ,double phase);
+	void DrawWave(HDC _hdc , double duty , double freq , double step ,double startPos , double dt ,double phase);
 public:
 	inline void SetSize(int _w, int _h){m_iHeight = _h;m_iWidth = _w;}
 	inline void SetDuty(double _duty){ if (_duty <= 100 && _duty >= 1E-5) m_fDuty = _duty;}

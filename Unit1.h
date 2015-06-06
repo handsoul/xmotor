@@ -27,6 +27,7 @@
 #include "DrawGraphics.h"
 #include "SerialPort.h"
 #include "cnComm.h"
+#include "BeepThread.h"
 
 typedef enum TagInfoType
 {
@@ -34,6 +35,14 @@ typedef enum TagInfoType
 	InfoType_Warn,
 	InfoType_Error,
 }eInfoType;
+
+typedef enum tagWorkingSteps
+{
+	STEP_IDLE = 0,
+	STEP_WAITING,
+	STEP_HANDLING,
+    STEP_TIMEOUT,
+}eWorkStep;
 
 // ---------------------------------------------------------------------------
 class TForm1 : public TForm
@@ -64,7 +73,7 @@ __published: // IDE-managed Components
 	TImage *ImageMode3;
 	TLabel *Label4;
 	TLabel *labelSerialNO;
-	TButton *Button2;
+	TButton *btnStoreToDataBase;
 	TImage *ImageTestModeOverAll;
 	TEdit *ED_HighVoltage;
 	TEdit *ED_LowVoltage;
@@ -76,8 +85,9 @@ __published: // IDE-managed Components
 	TPaintBox *PaintBox1;
 	TLabel *Label6;
 	TLabel *Label7;
-	TButton *Button3;
-	void __fastcall Button2Click(TObject *Sender);
+	TButton *btnCheckCfg;
+	TButton *Button4;
+	void __fastcall btnStoreToDataBaseClick(TObject *Sender);
 	void __fastcall PaintBox1Paint(TObject *Sender);
 	void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
 	void __fastcall stbSysBarDrawPanel(TStatusBar *StatusBar, TStatusPanel *Panel, const TRect &Rect);
@@ -97,6 +107,8 @@ __published: // IDE-managed Components
 	void __fastcall FormKeyDown(TObject *Sender, WORD &Key, TShiftState Shift);
 	void __fastcall btnSqlTestClick(TObject *Sender);
 	void __fastcall FormResize(TObject *Sender);
+	void __fastcall btnCheckCfgClick(TObject *Sender);
+	void __fastcall Button4Click(TObject *Sender);
 	void __fastcall Button3Click(TObject *Sender);
 
 
@@ -113,6 +125,8 @@ private: // User declarations
 		return (short)(h-l)*0.95f + l;
 	}
 
+	double CalcMode(double period, double N);
+
 	static const unsigned short voltageH = 1180;
 	static const unsigned short voltageL = 860;
 
@@ -124,6 +138,8 @@ private: // User declarations
 	int m_iBmpIdx;
 	int m_aiFlags[3];
 
+	eWorkStep m_eWorkStep;
+
     ConfigOjb * pCfg;
 
 	TBitBtn* aBtnTestMode[3]; // 3个测试模式.
@@ -133,6 +149,7 @@ private: // User declarations
 	TBitmap   * m_aFanIcons[3];	   // 风扇图标.
 
 	DataGrids *m_stDg;
+    BeepThread * pBeepThread;
 
 	void __fastcall ShowSysInfo(UnicodeString str, eInfoType eType=InfoType_Info);
 	void __fastcall ShowConnectInfo(bool DataBaseReady = false,bool DeviceReady=false);
@@ -146,33 +163,47 @@ private:
 	// 测试过程相关.
 	int iCurrStep ; //当前测试步骤.
 	int iTestEnd;
-    bool m_bUpdateFlag;
+	bool m_bUpdateFlag;
+	bool m_bStarted;
+	bool m_bTestPassed[3];
+	bool m_bNoSigFlag;
 
 	UnicodeString m_sTableName;
 	TestProcedure m_stTestProcedure;// = TestProcedure();
 
 	SerialPortBase comx;
+	bool m_bResponse;
+
+	double m_startPos;
+
 
 	void __fastcall SetGroupBox(TGroupBox * grp , bool bVal);
 	void __fastcall StartTestMode(int i);
 	void __fastcall ShowTestBlink(bool TestEnd = false);
 	void __fastcall ShowTestResult(int iTestMode);
 	void __fastcall ExecTestMode(void);
+	bool __fastcall CheckIfPass(int idx);
 
 	int __fastcall GetIndex(void);
 
 	bool SndData(unsigned char *pbuf, unsigned char mode , unsigned short vh = defaultVoltH, unsigned short vl = defaultVoltL);
 
 	bool __fastcall prepareDataBase(void);
-	bool __fastcall storeDataBase(void);
+	bool __fastcall storeDataBase(UnicodeString serialNo = "");
 
 	bool __fastcall TryOpenPort(void);// 尝试打开串口并通信....
 	bool __fastcall ClosePort(void);  // 断开串口...
 
+	void __fastcall HandleResult(void);
+
 	void __fastcall OnRecvMessage(TMessage &msg);
 	void __fastcall OnEraseBkgnd(TWMEraseBkgnd& msg);
 
-	bool __fastcall ParseData(unsigned char * buf,unsigned int len);
+	void __fastcall ResetStatus(void);
+	bool __fastcall ParseDataSliced(unsigned char * buf,unsigned int len);
+	bool __fastcall ParseData(unsigned char * buf,unsigned int len, unsigned int * usedLen);
+
+
 	BEGIN_MESSAGE_MAP
 		VCL_MESSAGE_HANDLER(MSG_RECV_COMMDATA,TMessage,OnRecvMessage)
 		//VCL_MESSAGE_HANDLER(WM_ERASEBKGND,TWMEraseBkgnd,OnEraseBkgnd)

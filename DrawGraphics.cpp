@@ -275,8 +275,9 @@ int GetVal(double duty, double freq,double t)//相位用°表示.
 // 曲线绘制.
 void DataGrids::DrawWave(HDC _hdc , double duty , double freq , double step,double startPos , double dt ,double phase)
 {
+	static int ixval = 0;
 	Gdiplus::PointF ps,pe;
-	int state = GetVal(duty,freq,0);
+
 
 	Gdiplus::Pen pen(Gdiplus::Color(0,0,255),1);
 	Gdiplus::Pen penr(Gdiplus::Color(0,0,0),1);
@@ -288,14 +289,17 @@ void DataGrids::DrawWave(HDC _hdc , double duty , double freq , double step,doub
 	step = (step < 1) ? 1 : step ;
 	startPos = (startPos > m_iWidth) ? m_iWidth:startPos;
 
+	int state = GetVal(duty,freq,0);
 	ps = Gdiplus::PointF(startPos,GetPosition(state));
-	for(int i =0 ;i < (m_iWidth - startPos) / step ; i++)
+
+	for(int i = startPos/step ;i < m_iWidth / step ; i++)
 	{
-		state = GetVal(duty,freq,(i + phase)*dt);
-		pe = Gdiplus::PointF(i*step + startPos ,GetPosition(state));
+		state = GetVal(duty,freq,(i + phase - (startPos / step))*dt);
+		pe = Gdiplus::PointF(i*step,GetPosition(state));
 		g.DrawLine(&pen,ps,pe);
 		ps = pe;
 	}
 
 	g.DrawRectangle(&penr,0,0,m_iWidth-1,m_iHeight-1);
 }
+

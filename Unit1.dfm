@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 0
   BorderIcons = [biSystemMenu, biMinimize, biMaximize, biHelp]
   Caption = #31471#30422#33258#21160#26816#27979#31995#32479'----'#22885#29305#22810#30005#23376#31185#25216#26377#38480#20844#21496
-  ClientHeight = 531
+  ClientHeight = 549
   ClientWidth = 1150
   Color = clWhite
   DoubleBuffered = True
@@ -24,7 +24,7 @@ object Form1: TForm1
   OnResize = FormResize
   DesignSize = (
     1150
-    531)
+    549)
   PixelsPerInch = 96
   TextHeight = 25
   object iconDataBase: TImage
@@ -132,8 +132,8 @@ object Form1: TForm1
     ParentFont = False
   end
   object ImageFan: TImage
-    Left = 740
-    Top = 10
+    Left = 715
+    Top = 22
     Width = 40
     Height = 40
     Picture.Data = {
@@ -5778,8 +5778,8 @@ object Form1: TForm1
     Stretch = True
   end
   object Image1: TImage
-    Left = 983
-    Top = 6
+    Left = 958
+    Top = 18
     Width = 127
     Height = 41
     Anchors = [akLeft, akTop, akRight]
@@ -6315,8 +6315,8 @@ object Form1: TForm1
       FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000}
   end
   object Label6: TLabel
-    Left = 786
-    Top = 18
+    Left = 761
+    Top = 30
     Width = 175
     Height = 24
     Anchors = [akLeft, akTop, akRight]
@@ -6331,8 +6331,8 @@ object Form1: TForm1
     StyleElements = [seClient, seBorder]
   end
   object Label7: TLabel
-    Left = 853
-    Top = 53
+    Left = 828
+    Top = 65
     Width = 184
     Height = 21
     Anchors = [akLeft, akTop, akRight]
@@ -6346,23 +6346,24 @@ object Form1: TForm1
     StyleElements = [seClient, seBorder]
   end
   object PaintBox1: TPaintBox
-    Left = 687
-    Top = 116
-    Width = 455
-    Height = 385
+    Left = 651
+    Top = 99
+    Width = 486
+    Height = 419
     Cursor = crHandPoint
     Hint = #27874#24418#25968#25454#26174#31034
     Anchors = [akLeft, akTop, akRight, akBottom]
     Color = clMedGray
     ParentColor = False
     OnPaint = PaintBox1Paint
+    ExplicitHeight = 401
   end
   object mm_ComRec: TMemo
-    Left = 687
-    Top = 162
-    Width = 455
-    Height = 237
-    Alignment = taRightJustify
+    Left = 652
+    Top = 126
+    Width = 483
+    Height = 375
+    Anchors = [akLeft, akRight]
     Font.Charset = GB2312_CHARSET
     Font.Color = clWindowText
     Font.Height = -12
@@ -6406,10 +6407,10 @@ object Form1: TForm1
     OnClick = Button1Click
   end
   object SG_WaveData: TStringGrid
-    Left = 207
-    Top = 8
+    Left = 163
+    Top = 28
     Width = 474
-    Height = 224
+    Height = 237
     Anchors = [akLeft, akTop, akBottom]
     BevelInner = bvNone
     Color = clWhite
@@ -6436,7 +6437,7 @@ object Form1: TForm1
   end
   object stbSysBar: TStatusBar
     Left = 0
-    Top = 503
+    Top = 521
     Width = 1150
     Height = 28
     BorderWidth = 1
@@ -6455,7 +6456,7 @@ object Form1: TForm1
       item
         Bevel = pbNone
         Style = psOwnerDraw
-        Width = 200
+        Width = 400
       end
       item
         Bevel = pbNone
@@ -6463,8 +6464,8 @@ object Form1: TForm1
         Width = 300
       end>
     OnDrawPanel = stbSysBarDrawPanel
-    ExplicitTop = 481
-    ExplicitWidth = 1161
+    ExplicitLeft = 45
+    ExplicitTop = 444
   end
   object CheckBox1: TCheckBox
     Left = 139
@@ -6478,12 +6479,12 @@ object Form1: TForm1
     Font.Name = #23435#20307
     Font.Style = []
     ParentFont = False
-    TabOrder = 4
+    TabOrder = 3
     Visible = False
   end
   object bitbtn_Store: TBitBtn
-    Left = 53
-    Top = 99
+    Left = 36
+    Top = 114
     Width = 80
     Height = 80
     Default = True
@@ -6495,15 +6496,15 @@ object Form1: TForm1
     Layout = blGlyphTop
     ModalResult = 6
     ParentFont = False
-    TabOrder = 5
+    TabOrder = 4
     OnClick = bitbtn_StoreClick
     OnMouseDown = bitbtn_StoreMouseDown
     OnMouseUp = bitbtn_StoreMouseUp
   end
   object grpTest: TGroupBox
     Left = 8
-    Top = 254
-    Width = 673
+    Top = 272
+    Width = 629
     Height = 247
     Anchors = [akLeft, akBottom]
     Caption = #27979#37327
@@ -6516,7 +6517,7 @@ object Form1: TForm1
     ParentBackground = False
     ParentColor = False
     ParentFont = False
-    TabOrder = 6
+    TabOrder = 5
     object ImageMode1: TImage
       Left = 199
       Top = 38
@@ -7639,7 +7640,7 @@ object Form1: TForm1
       ParentFont = False
       TabOrder = 2
     end
-    object Button2: TButton
+    object btnStoreToDataBase: TButton
       Left = 448
       Top = 119
       Width = 88
@@ -7652,7 +7653,7 @@ object Form1: TForm1
       Font.Style = []
       ParentFont = False
       TabOrder = 3
-      OnClick = Button2Click
+      OnClick = btnStoreToDataBaseClick
     end
     object ED_HighVoltage: TEdit
       Left = 37
@@ -7686,8 +7687,8 @@ object Form1: TForm1
     end
   end
   object cbSerialPorts: TComboBox
-    Left = 53
-    Top = 185
+    Left = 36
+    Top = 205
     Width = 80
     Height = 22
     Font.Charset = GB2312_CHARSET
@@ -7698,11 +7699,11 @@ object Form1: TForm1
     ParentFont = False
     TabOrder = 8
   end
-  object Button3: TButton
-    Left = 53
-    Top = 23
-    Width = 79
-    Height = 25
+  object btnCheckCfg: TButton
+    Left = 36
+    Top = 22
+    Width = 80
+    Height = 33
     Caption = #31995#32479#31649#29702
     Font.Charset = GB2312_CHARSET
     Font.Color = clWindowText
@@ -7712,7 +7713,23 @@ object Form1: TForm1
     ParentFont = False
     TabOrder = 9
     StyleElements = [seClient, seBorder]
-    OnClick = Button3Click
+    OnClick = btnCheckCfgClick
+  end
+  object Button4: TButton
+    Left = 36
+    Top = 60
+    Width = 80
+    Height = 33
+    Caption = #26597#30475#37197#32622
+    Font.Charset = GB2312_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = #23435#20307
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 10
+    StyleElements = [seClient, seBorder]
+    OnClick = Button4Click
   end
   object ADOConnection1: TADOConnection
     Provider = 'Microsoft.Jet.OLEDB.4.0'

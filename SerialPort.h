@@ -20,7 +20,8 @@ protected:
 
 
 public:
-    volatile bool m_bSuspended;
+
+	volatile bool m_bSuspended;
 	void ThreadSuspend(void)
 	{
 		if(m_bSuspended == false)

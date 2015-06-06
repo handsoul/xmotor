@@ -8,15 +8,15 @@ using namespace std;
 
 const Params DefaultParams =
 {
-	{	 1.1,	1.3		},
-	{	0.65,	0.85	},
-	{     45,   55		},
+	{	 1.2,	1.6		},
+	{	0.59,	0.84	},
+	{     40,   60		},
 	{
-		{	0.9,	1.0	},
-		{	 39,	41	},
-		{	1990,	2010},
+		{ 0.95,	1.05	},
+		{   39,	41	},
+		{ 1998,	2002},
 	},
-    {   1.18,   0.86    }
+    {    0.86,  1.18    }
 };
 
 static HANDLE hFILE = INVALID_HANDLE_VALUE;
@@ -93,11 +93,13 @@ bool CreateApplicationFile(ConfigOjb ** ppojb)
 	hFMAP = hFileMapping;
     pMappedAddr = p;
 
+    *ppojb = pobj;
+
 	return true;
 }
 
 
-inline void SyncToMappdFile(void)
+void SyncToMappdFile(void)
 {
 	if(pMappedAddr != NULL)
 	{
@@ -142,7 +144,11 @@ void TestProcedure::InitGetNameList(void)
 	{
 		(*it)->NameGroupToString(m_sNameList);
 	}
-	m_sNameList.Delete(m_sNameList.Length(), 1);
+
+	//m_sNameList.Delete(m_sNameList.Length(), 1);
+
+	m_sNameList += UnicodeString("序列号");
+
 	m_sNameList += ")";
 
 	for (it = m_vDataSet.begin(); it != m_vDataSet.end(); ++it)
@@ -151,7 +157,7 @@ void TestProcedure::InitGetNameList(void)
 	}
 }
 
-void TestProcedure::UpdateValueList(void)
+void TestProcedure::UpdateValueList(UnicodeString SerialNumber)
 {
 	std::vector<DataItemSet*>::iterator it;
 	m_sValueList = "(";
@@ -160,7 +166,10 @@ void TestProcedure::UpdateValueList(void)
 		(*it)->ValueGroupToString(m_sValueList);
 	}
 
-	m_sValueList.Delete(m_sValueList.Length(), 1);
+	//m_sValueList.Delete(m_sValueList.Length(), 1);
+
+	m_sValueList  += SerialNumber;
+
 	m_sValueList += ")";
 }
 
@@ -171,7 +180,7 @@ void TestProcedure::SqlBuilderCreateTable(const UnicodeString & sTableName)
 
 	m_sSqlCreateTable = "create table";
 	m_sSqlCreateTable += " " + sTableName + " ";
-	m_sSqlCreateTable += "(id int IDENTITY(1,1) primary key,记录时间 datetime default now(),";
+	m_sSqlCreateTable += "(id int IDENTITY(1,1) primary key,序列号 VARCHAR,记录时间 datetime default now(),";
 
 	for (is = vColumnStrList.begin(); is < vColumnStrList.end(); ++is)
 	{
@@ -248,10 +257,10 @@ void TestProcedure::SqlCreateTable(const UnicodeString & sTableName,
 }
 
 void TestProcedure::SqlInsertTableValue(const UnicodeString &sTableName,
-	UnicodeString &sql)
+	UnicodeString &sql, UnicodeString SerialNumber)
 {
 
-	UpdateValueList();
+	UpdateValueList(SerialNumber);
 
 	sql = UnicodeString("insert into " + sTableName + " " + m_sNameList +
 		" values " + m_sValueList);

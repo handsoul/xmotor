@@ -40,9 +40,10 @@ typedef struct tagConfigFileOjb
 }ConfigOjb;
 
 #pragma pack(pop)
+extern const Params DefaultParams;
 
 bool CreateApplicationFile(ConfigOjb ** ppojb);
-inline void SyncToMappdFile(void);
+void SyncToMappdFile(void);
 void CloseMappedFile(void);
 
 class BaseDataItem
@@ -428,11 +429,11 @@ public:
 		for (it = m_vItems.begin(); it != m_vItems.end(); ++it)
 		{
 #ifndef MIN_FIRST
-			s += FloatToStrF((*it)->GetMax(), ffGeneral, 10, 3) + ",";
-			s += FloatToStrF((*it)->GetMin(), ffGeneral, 10, 3) + ",";
+			s += FloatToStrF((*it)->GetMax(), ffFixed, 10, 3) + ",";
+			s += FloatToStrF((*it)->GetMin(), ffFixed, 10, 3) + ",";
 #else
-			s += FloatToStrF((*it)->GetMin(), ffGeneral, 10, 3) + ",";
-			s += FloatToStrF((*it)->GetMax(), ffGeneral, 10, 3) + ",";
+			s += FloatToStrF((*it)->GetMin(), ffFixed, 10, 3) + ",";
+			s += FloatToStrF((*it)->GetMax(), ffFixed, 10, 3) + ",";
 #endif
 		}
 		/* if (DeleteLastSpaceChar)
@@ -464,7 +465,7 @@ protected:
 	UnicodeString m_sName;
 
 	void InitGetNameList(void);
-	void UpdateValueList(void);
+	void UpdateValueList(UnicodeString SerialNumber = "");
 	void SqlBuilderCreateTable(const UnicodeString & sTableName);
 
 public:
@@ -474,7 +475,7 @@ public:
 	int Length(void) const ;
 	void SqlCreateTable(const UnicodeString & sTableName, UnicodeString &sql);
 	void SqlInsertTableValue(const UnicodeString &sTableName,
-		UnicodeString &sql);
+		UnicodeString &sql,UnicodeString serialNumber);
 
 	bool DataUpdated(void);
 	void ResetUpdated(void);

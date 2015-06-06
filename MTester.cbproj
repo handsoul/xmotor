@@ -133,6 +133,10 @@
     <Import Project="thisproj.optset" Condition="'$(Cfg_1_Win32)'!='' And Exists('thisproj.optset')"/>
     <Import Project="thisproj.optset" Condition="'$(Cfg_2)'!='' And Exists('thisproj.optset')"/>
     <ItemGroup>
+        <CppCompile Include="BeepThread.cpp">
+            <DependentOn>BeepThread.h</DependentOn>
+            <BuildOrder>15</BuildOrder>
+        </CppCompile>
         <None Include="cnComm.h">
             <BuildOrder>12</BuildOrder>
         </None>
@@ -146,6 +150,12 @@
         <None Include="DrawGraphics.h">
             <BuildOrder>6</BuildOrder>
         </None>
+        <CppCompile Include="FormAuth.cpp">
+            <Form>UnitFormAuth</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>FormAuth.h</DependentOn>
+            <BuildOrder>14</BuildOrder>
+        </CppCompile>
         <ResourceCompile Include="icons.rc">
             <Form>icons.res</Form>
             <BuildOrder>7</BuildOrder>
@@ -180,6 +190,12 @@
             <DependentOn>Unit2.h</DependentOn>
             <BuildOrder>3</BuildOrder>
         </CppCompile>
+        <CppCompile Include="Unit3.cpp">
+            <Form>FormSysCfg</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>Unit3.h</DependentOn>
+            <BuildOrder>13</BuildOrder>
+        </CppCompile>
         <CppCompile Include="Unit4.cpp">
             <Form>Form4</Form>
             <FormType>dfm</FormType>
@@ -187,9 +203,11 @@
             <BuildOrder>9</BuildOrder>
         </CppCompile>
         <FormResources Include="ShowStatus.dfm"/>
+        <FormResources Include="Unit3.dfm"/>
         <FormResources Include="Unit4.dfm"/>
-        <FormResources Include="Unit2.dfm"/>
         <FormResources Include="Unit1.dfm"/>
+        <FormResources Include="Unit2.dfm"/>
+        <FormResources Include="FormAuth.dfm"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -658,13 +676,13 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
             </Deployment>
             <Platforms>
                 <Platform value="Win32">True</Platform>
